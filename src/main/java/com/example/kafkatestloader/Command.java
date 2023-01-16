@@ -58,7 +58,7 @@ public class Command {
         String reply = "Total Events Received: " + round_trip_latencies.size();
         log.error("Calculating latencies of db_latencies");
 //        reply = reply + percentile(db_latencies, 50) + "    " + percentile(db_latencies, 90) + "," + percentile(db_latencies, 99);
-        reply = reply + " with p50 (" + percentile(round_trip_latencies, 50) + "), p90 (" + percentile(round_trip_latencies, 90) + "), p99 (" + percentile(round_trip_latencies, 99)+") ";
+        reply = reply + " with p50 (" + percentile(round_trip_latencies, 50) + "), p90 (" + percentile(round_trip_latencies, 90) + "), p99 (" + percentile(round_trip_latencies, 99) + ") ";
 //        log.error("50th percentile- {}", percentile(db_latencies, 50));
 //        log.error("90th percentile- {}", percentile(db_latencies, 90));
 //        log.error("99th percentile- {}", percentile(db_latencies, 99));
@@ -90,8 +90,11 @@ public class Command {
         this.objectReader = mapper.reader();
         this.objectWriter = mapper.writer();
         log.error("Inside produce records");
-        String createMessage = "{\"command_name\" : \"Create\",  \"tracking_number\": \"kjjnjnjkdjs\", \"order_number\": \"skdjskdj\", \"service_type\": \"EXPRESS\", \"shipment_type\": \"EXPRESS\", \"payment_mode\": \"COD\", \"origin_address\" : { \"address_line1\": \"alsjkjsd\", \"address_line2\": \"sddds\" }}";
-        String key = "1047048178622271488";
+        Long comp = 1L;
+        String createMessage = "{\"command_name\" : \"Create\", \"user_id\":10,  \"company_id\":" + comp + ", \"tracking_number\": \"kjkdjs\", \"order_number\": \"skdjskdj\", \"service_type\": \"EXPRESS\", \"shipment_type\": \"EXPRESS\", \"payment_mode\": \"COD\", \"origin_address\" : { \"address_line1\": \"alsjkjsd\", \"address_line2\": \"sddds\" }}";
+        String upsertMessage = "{\"command_name\" : \"Upsert\",\"command_type\": \"update\",  \"user_id\":10,  \"company_id\":" + comp + ",\"order_number\": \"skdjskdj\", \"service_type\": \"EXPRESS\", \"shipment_type\": \"EXPRESS\", \"payment_mode\": \"COD\", \"origin_address\" : { \"address_line1\": \"alsjkjsd\", \"address_line2\": \"sddds\" }}";
+
+        String key = "1047048178622271489";
         String updateMessage = "{\"command_name\" : \"Update\", \"payment_mode\": \"COD\"}";
         long a = System.currentTimeMillis();
         int jloop = 4;
@@ -100,7 +103,8 @@ public class Command {
         for (int i = 0; i < itr; i++) {
             for (int j = 0; j < jloop; j++) {
 //                kafkaTemplate.send(COMMAND_TOPIC,key, updateMessage);
-                kafkaTemplate.send(COMMAND_TOPIC, createMessage);
+//                kafkaTemplate.send(COMMAND_TOPIC, createMessage);
+                kafkaTemplate.send(COMMAND_TOPIC, key, upsertMessage);
             }
             Thread.sleep(interval);
         }
@@ -116,3 +120,10 @@ public class Command {
         return latencies.get(index - 1);
     }
 }
+
+
+//in config
+//ProducerRecord<String, String> eventRecord = new ProducerRecord<>(kafkaTopicConfig.getEventsTopicName(), objectWriter.writeValueAsString(event));
+//            eventRecord.headers().add("time1", objectWriter.writeValueAsBytes(String.valueOf(ts)));
+////            if (System.currentTimeMillis() % 2 == 0) throw new RuntimeException("manual exception");
+//                    kafkaTemplate.send(eventRecord);
