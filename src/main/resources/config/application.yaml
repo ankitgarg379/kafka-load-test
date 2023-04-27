@@ -4,6 +4,8 @@ logging:
       springframework:
         jdbc:
           core: DEBUG
+server:
+  port: ${PORT:8088}
 
 kafka:
   producer:

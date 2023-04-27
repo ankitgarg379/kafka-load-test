@@ -30,7 +30,7 @@ import java.util.List;
 @Component
 public class KafkaListeners {
 
-    @KafkaListener(topics = "local_shipment_service_reply",  groupId = "group1")
+    @KafkaListener(topics = "local_shipment_service_reply1",  groupId = "group1")
     public void listenEvents(ConsumerRecord<String, String> consumerRecord) throws IllegalAccessException, InstantiationException, JsonProcessingException {
          try {
              log.error("Event listener: {} \n Time: {}" , consumerRecord.value(), convertTime(consumerRecord.timestamp()));
@@ -43,10 +43,10 @@ public class KafkaListeners {
     ObjectWriter objectWriter;
     ObjectReader objectReader;
 
-    @KafkaListener(topics = "local_shipment_service_events", groupId = "group1", concurrency = "10")
+    @KafkaListener(topics = "local_shipment_service_events1", groupId = "group1", concurrency = "10")
     public void listenReply(@Payload String message,
-                            @Header(name = KafkaHeaders.RECEIVED_MESSAGE_KEY, required = false) String key,
-                            @Header(name = KafkaHeaders.RECEIVED_PARTITION_ID) int partition_id,
+//                            @Header(name = KafkaHeaders.RECEIVED_MESSAGE_KEY, required = false) String key,
+//                            @Header(name = KafkaHeaders.RECEIVED_PARTITION_ID) int partition_id,
                             @Header(KafkaHeaders.OFFSET) Long offset,
                             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
                             @Header("time1") String  time1,

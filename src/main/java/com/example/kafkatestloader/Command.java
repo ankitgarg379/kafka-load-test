@@ -1,8 +1,13 @@
 package com.example.kafkatestloader;
 
 
+import com.fareye.shipment.entity.service.common.commands.UpsertCommand;
+import com.fareye.shipment.entity.service.common.shipmentDTOs.*;
+import com.fareye.shipment.entity.service.common.valueobjects.*;
+import com.fareye.shipment.entity.service.common.valueobjects.Exception;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -18,9 +23,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @RestController
 @Slf4j
@@ -41,7 +45,7 @@ public class Command {
     String msg1 = "";
 
 
-    private static final String COMMAND_TOPIC = "local_shipment_service_command";
+    private static final String COMMAND_TOPIC = "aw-or-dv-shipment-service-fe-command-topic";
 
     @GetMapping("/publish/{message}")
     public String publishMessage(@PathVariable("message") final String message) {
@@ -73,8 +77,9 @@ public class Command {
         return msg1 + " ||     " + reply + "    Latencies cleared";
     }
 
-    @GetMapping("/test/{itr}")
-    public String test(@PathVariable("itr") final int itr) throws JsonProcessingException, InterruptedException {
+
+    @GetMapping("/test/{itr}/{update}")
+    public String test(@PathVariable("itr") final int itr, @PathVariable("update") final boolean isUpdate) throws JsonProcessingException, InterruptedException {
         ObjectMapper mapper = new ObjectMapper();
         mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -91,22 +96,178 @@ public class Command {
         this.objectWriter = mapper.writer();
         log.error("Inside produce records");
         Long comp = 1L;
-        String createMessage = "{\"command_name\" : \"Create\", \"user_id\":10,  \"company_id\":" + comp + ", \"tracking_number\": \"kjkdjs\", \"order_number\": \"skdjskdj\", \"service_type\": \"EXPRESS\", \"shipment_type\": \"EXPRESS\", \"payment_mode\": \"COD\", \"origin_address\" : { \"address_line1\": \"alsjkjsd\", \"address_line2\": \"sddds\" }}";
-        String upsertMessage = "{\"command_name\" : \"Upsert\",\"command_type\": \"update\",  \"user_id\":10,  \"company_id\":" + comp + ",\"order_number\": \"skdjskdj\", \"service_type\": \"EXPRESS\", \"shipment_type\": \"EXPRESS\", \"payment_mode\": \"COD\", \"origin_address\" : { \"address_line1\": \"alsjkjsd\", \"address_line2\": \"sddds\" }}";
+        //String createMessage = "{\"command_name\" : \"Create\", \"user_id\":10,  \"company_id\":" + comp + ", \"tracking_number\": \"kjkdjs\", \"order_number\": \"skdjskdj\", \"service_type\": \"EXPRESS\", \"shipment_type\": \"EXPRESS\", \"payment_mode\": \"COD\", \"origin_address\" : { \"address_line1\": \"alsjkjsd\", \"address_line2\": \"sddds\" }}";
+        String exampleUpsertMessage = "{\"command_name\" : \"Upsert\",\"command_type\": \"update\",  \"user_id\":10,  \"company_id\":" + comp +
+                ",\"order_number\": \"skdjskdj\", \"service_type\": \"EXPRESS\", \"shipment_type\": \"EXPRESS\", \"payment_mode\": \"COD\"," +
+                " \"origin_address\" : { \"address_line1\": \"alsjkjsd\", \"address_line2\": \"sddds\" }}";
 
-        String key = "1047048178622271489";
+
+        UpsertCommand newUpsertCommandCreate = UpsertCommand.builder()
+                .commandName("Upsert")
+                .commandType("create")
+                .companyId(3L)
+                .userId(10L)
+                .shipmentBasicDTO(ShipmentBasicDTO.builder()
+                        .shipmentDetails(ShipmentDetails.builder()
+                                .orderNumber("skdjskdj")
+                                .serviceType("EXPRESS")
+                                .itemDetails(getItemDetails())
+                                .qualityCheckDetails(getQCs())
+                                .build())
+                        .origin(Origin.builder()
+                                .originAddress(Address.builder()
+                                        .addressLine1("34 east block")
+                                        .addressLine2("rohini-86")
+                                        .city("delhi")
+                                        .code("DEL")
+                                        .build())
+                                .originPaymentDetails(Payment.builder()
+                                        .amountToBeCollected(2.3)
+                                        .paymentMode("Cash")
+                                        .build())
+                                .build())
+                        .destination(Destination.builder()
+                                .destinationAddress(Address.builder()
+                                        .addressLine1("34 east block")
+                                        .addressLine2("rohini-86")
+                                        .city("delhi")
+                                        .code("DEL")
+                                        .build())
+//                                .destinationEndTime(LocalDateTime.now())
+                                .build())
+                        .build())
+                .shipmentMilestonesInfoDTO(ShipmentMilestonesInfoDTO.builder()
+                        .merchantCode("mcode")
+                        .merchantName("mname")
+                        .carrierPlanningOnTimeFlag(true)
+                        .carrierPlanningOnTimeFlag(false)
+                        .exceptions(getException())
+                        .build())
+                .build();
+
+        UpsertCommand newUpsertCommandUpdate = UpsertCommand.builder()
+                .commandName("Upsert")
+                .commandType("update")
+                .companyId(2L)
+                .userId(10L)
+                .shipmentBasicDTO(ShipmentBasicDTO.builder()
+                        .shipmentDetails(ShipmentDetails.builder()
+                                .orderNumber("skdjskdj")
+                                .serviceType("EXPRESS")
+                                .itemDetails(getItemDetails())
+                                .qualityCheckDetails(getQCs())
+                                .build())
+                        .origin(Origin.builder()
+                                .originAddress(Address.builder()
+                                        .addressLine1("34 east block")
+                                        .addressLine2("rohini-86")
+                                        .city("delhi")
+                                        .code("DEL")
+                                        .build())
+                                .originPaymentDetails(Payment.builder()
+                                        .amountToBeCollected(2.3)
+                                        .paymentMode("Cash")
+                                        .build())
+                                .build())
+                        .destination(Destination.builder()
+                                .destinationAddress(Address.builder()
+                                        .addressLine1("34 east block")
+                                        .addressLine2("rohini-86")
+                                        .city("delhi")
+                                        .code("DEL")
+                                        .build())
+//                                .destinationEndTime(LocalDateTime.now())
+                                .build())
+                        .build())
+                .shipmentMilestonesInfoDTO(ShipmentMilestonesInfoDTO.builder()
+                        .merchantCode("mcode")
+                        .merchantName("mname")
+                        .carrierPlanningOnTimeFlag(true)
+                        .carrierPlanningOnTimeFlag(false)
+                        .exceptions(getException())
+                        .build())
+                .build();
+
+
+//        long currTime = System.currentTimeMillis();
+//        String key = "111111" + Long.toString(currTime);
         String updateMessage = "{\"command_name\" : \"Update\", \"payment_mode\": \"COD\"}";
         long a = System.currentTimeMillis();
-        int jloop = 4;
+        int jloop = 1;
         int interval = 3;
         Command.first_time = System.currentTimeMillis();
         for (int i = 0; i < itr; i++) {
             for (int j = 0; j < jloop; j++) {
 //                kafkaTemplate.send(COMMAND_TOPIC,key, updateMessage);
 //                kafkaTemplate.send(COMMAND_TOPIC, createMessage);
-                kafkaTemplate.send(COMMAND_TOPIC, key, upsertMessage);
+                String keyInsert = "111111" + System.currentTimeMillis();
+                String keyUpdate = "1111111678685992240";
+                if (isUpdate)
+                    kafkaTemplate.send(COMMAND_TOPIC, keyUpdate, objectWriter.writeValueAsString(newUpsertCommandUpdate));
+                else
+                    kafkaTemplate.send(COMMAND_TOPIC, keyInsert, objectWriter.writeValueAsString(newUpsertCommandCreate));
+
             }
             Thread.sleep(interval);
+        }
+
+//        log.error("Time to send {} requests: {} with batch {} and interval {}", itr * jloop, System.currentTimeMillis() - a, jloop, interval);
+        msg1 = "Time to send " + (itr * jloop) + " requests: " + (System.currentTimeMillis() - a) + " with batch " + jloop + " and interval " + interval;
+        return msg1;
+
+    }
+
+    @GetMapping("/example/{itr}/{update}")
+    public String example_test(@PathVariable("itr") final int itr, @PathVariable("update") final boolean isUpdate) throws JsonProcessingException, InterruptedException {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        mapper.setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
+            @Override
+            public JsonPOJOBuilder.Value findPOJOBuilderConfig(AnnotatedClass ac) {
+                if (ac.hasAnnotation(JsonPOJOBuilder.class)) {//If no annotation present use default as empty prefix
+                    return super.findPOJOBuilderConfig(ac);
+                }
+                return new JsonPOJOBuilder.Value("build", "");
+            }
+        });
+        this.objectReader = mapper.reader();
+        this.objectWriter = mapper.writer();
+        log.error("Inside produce records");
+        Long comp = 10L;
+
+
+
+
+        String exampleUpsertMessage = "{\"command_name\" : \"Upsert\",\"command_type\": \"update\",  \"user_id\":10,  \"company_id\":" + comp +
+                ",\"order_number\": \"skdjskdj\", \"service_type\": \"EXPRESS\", \"shipment_type\": \"EXPRESS\", \"payment_mode\": \"COD\"," +
+                " \"origin_address\" : { \"address_line1\": \"alsjkjsd\", \"address_line2\": \"sddds\" }}";
+
+
+
+//        long currTime = System.currentTimeMillis();
+//        String key = "111111" + Long.toString(currTime);
+        String updateMessage = "{\"command_name\" : \"Update\", \"payment_mode\": \"COD\"}";
+        long a = System.currentTimeMillis();
+        int jloop = 1;
+        int interval = 3;
+        Command.first_time = System.currentTimeMillis();
+        for (int i = 0; i < itr; i++) {
+            for (int j = 0; j < jloop; j++) {
+//                kafkaTemplate.send(COMMAND_TOPIC,key, updateMessage);
+//                kafkaTemplate.send(COMMAND_TOPIC, createMessage);
+                String keyInsert = "111111" + System.currentTimeMillis();
+                String keyUpdate = "1111111678685992240";
+                String exampleInsertMessage = "{\"command_name\" : \"Create\",\"tracking_number\": " +keyInsert+ ",  \"user_id\":10,  \"company_id\":" + comp +
+                        ",\"order_number\": \"skdjskdj\", \"service_type\": \"EXPRESS\", \"shipment_type\": \"EXPRESS\", \"payment_mode\": \"COD\"," +
+                        " \"origin_address\" : { \"address_line1\": \"alsjkjsd\", \"address_line2\": \"sddds\" }}";
+                if (isUpdate)
+                    kafkaTemplate.send(COMMAND_TOPIC, keyUpdate, exampleUpsertMessage);
+                else
+                    kafkaTemplate.send(COMMAND_TOPIC, keyInsert, exampleInsertMessage);
+
+            }
+//            Thread.sleep(interval);
         }
 
 //        log.error("Time to send {} requests: {} with batch {} and interval {}", itr * jloop, System.currentTimeMillis() - a, jloop, interval);
@@ -118,6 +279,62 @@ public class Command {
     public static long percentile(List<Long> latencies, double percentile) {
         int index = (int) Math.ceil(percentile / 100.0 * latencies.size());
         return latencies.get(index - 1);
+    }
+
+    Set<Exception> getException() {
+
+        Set<Exception> exceptions = new HashSet<>();
+        exceptions.add(Exception.builder()
+                .createdBy(1234L)
+                .type("order create")
+                .exception("This is exception message at" + System.currentTimeMillis())
+                .build());
+        exceptions.add(Exception.builder()
+                .createdBy(1234L)
+                .type("order create")
+                .exception(" exception message 2  at " + System.currentTimeMillis())
+                .build());
+        return exceptions;
+    }
+
+    List<Item> getItemDetails() {
+        List<Item> items = new ArrayList<>();
+        items.add(Item.builder()
+                .code("laptop")
+                .hsnName("gds")
+                .imageUrl("qer.wer")
+                .name("laptop")
+                .build());
+        items.add(Item.builder()
+                .code("mobile")
+                .hsnName("qqq")
+                .imageUrl("qer.qqq")
+                .name("mobile")
+                .build());
+        return items;
+    }
+
+    List<QualityCheck> getQCs() {
+        List<QualityCheck> qcs = new ArrayList<>();
+        qcs.add(QualityCheck.builder()
+                .checkpoint("hub")
+                .image("ad.we")
+                .label("ok")
+                .value(5.5)
+                .build());
+        qcs.add(QualityCheck.builder()
+                .checkpoint("hub2")
+                .image("ad.we")
+                .label("ok")
+                .value(52.5)
+                .build());
+        qcs.add(QualityCheck.builder()
+                .checkpoint("hub3")
+                .image("ad.we")
+                .label("ok")
+                .value(53.5)
+                .build());
+        return qcs;
     }
 }
 
